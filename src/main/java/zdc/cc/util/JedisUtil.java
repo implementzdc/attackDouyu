@@ -12,6 +12,7 @@ package zdc.cc.util;
 
 import org.apache.log4j.Logger;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,12 +40,23 @@ public class JedisUtil {
         return RedisUtilHolder.instance;
     }
 
-    private static Map<String, JedisPool> map = new HashMap<String, JedisPool>();
+    private static Map<String, JedisPool> maps = new HashMap<String, JedisPool>();
 
 
     private static JedisPool getPool(String ip, int port) {
         String key = ip + ":"+ port;
         JedisPool jedisPool = null;
+        if (!maps.containsKey(key)) {
+            JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+            jedisPoolConfig.setMaxIdle(10);
+            jedisPoolConfig.setTestOnBorrow(true);
+            jedisPoolConfig.setTestOnReturn(true);
+            jedisPool = new JedisPool(jedisPoolConfig, ip, port, 1500);
+            maps.put(key, jedisPool);
+        }else {
+            jedisPool = maps.get(key);
+
+        }
         return jedisPool;
     }
 }
