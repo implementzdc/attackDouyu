@@ -14,13 +14,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import redis.clients.jedis.JedisCluster;
 import zdc.cc.Application;
 import zdc.cc.domain.User;
 import zdc.cc.util.RedisUtil;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,15 +40,16 @@ public class RedisTest {
 
 
     private static final Logger log = LoggerFactory.getLogger(RedisTest.class);
-    @Autowired
+    @Resource
     RedisUtil redisUtil;
 
+    @Resource
+    private JedisCluster jedisCluster;
     @Test
     public void testRedis(){
         User user= new User();
         user.setSex("1");
-        redisUtil.set("123", user);
-
+        jedisCluster.set("123", "ss");
         List<User> list = new ArrayList<>();
         list.add(user);
         redisUtil.set("test",list);

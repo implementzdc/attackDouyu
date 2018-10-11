@@ -11,21 +11,29 @@
 package zdc.cc.domain;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
 import zdc.cc.util.RedisUtil;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- * 〈一句话功能简述〉<br> 
+ * 〈一句话功能简述〉<br>
  * 〈〉
  *
  * @author
@@ -35,6 +43,7 @@ import zdc.cc.util.RedisUtil;
 @Configuration
 @EnableCaching
 @PropertySource("classpath:redis.properties")
+@ConditionalOnClass({JedisCluster.class})
 public class RedisConfig extends CachingConfigurerSupport {
     @Value("${redis.maxIdle}")
     private Integer maxIdle;
@@ -84,6 +93,7 @@ public class RedisConfig extends CachingConfigurerSupport {
 
     /**
      * JedisPoolConfig 连接池
+     *
      * @return
      */
     @Bean
@@ -107,6 +117,77 @@ public class RedisConfig extends CachingConfigurerSupport {
         jedisPoolConfig.setTestWhileIdle(testWhileIdle);
         return jedisPoolConfig;
     }
+
+    /**
+     * Redis集群的配置
+     *
+     * @return RedisClusterConfiguration
+     * @throws
+     * @autor lpl
+     * @date 2017年12月22日
+     */
+    @Bean
+    public RedisClusterConfiguration redisClusterConfiguration() {
+        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration();
+        //Set<RedisNode> clusterNodes
+        String[] serverArray = clusterNodes.split(",");
+
+        Set<RedisNode> nodes = new HashSet<RedisNode>();
+
+        for (String ipPort : serverArray) {
+            String[] ipAndPort = ipPort.split(":");
+            nodes.add(new RedisNode(ipAndPort[0].trim(), Integer.valueOf(ipAndPort[1])));
+        }
+
+        redisClusterConfiguration.setClusterNodes(nodes);
+        redisClusterConfiguration.setMaxRedirects(mmaxRedirectsac);
+
+        return redisClusterConfiguration;
+    }
+
+    @Bean
+    public JedisCluster getJedisCluster(JedisPoolConfig jedisPoolConfig) {
+        String[] cNodes = clusterNodes.split(",");
+        Set<HostAndPort> nodes = new HashSet<>();
+        //分割出集群节点
+        for (String node : cNodes) {
+            String[] hp = node.split(":");
+            nodes.add(new HostAndPort(hp[0], Integer.parseInt(hp[1])));
+        }
+
+        //创建集群对象//
+//        JedisCluster jedisCluster = new JedisCluster(nodes,timeout);
+        return new JedisCluster(nodes, maxWaitMillis, timeout, mmaxRedirectsac, password, jedisPoolConfig);
+    }
+
+
+    /**
+     * 配置工厂
+     *
+     * @param @param  jedisPoolConfig
+     * @param @return
+     * @return JedisConnectionFactory
+     * @throws
+     * @Title: JedisConnectionFactory
+     * @autor lpl
+     * @date 2017年12月22日
+     */
+    @Bean
+    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig, RedisClusterConfiguration redisClusterConfiguration) {
+        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
+        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
+        //IP地址
+        JedisConnectionFactory.setHostName(hostName);
+//        //端口号
+        JedisConnectionFactory.setPort(port);
+        JedisConnectionFactory.setTimeout(timeout);
+//
+        JedisConnectionFactory.setDatabase(dbIndex);
+        JedisConnectionFactory.setPassword(password);
+        return JedisConnectionFactory;
+    }
+
+
     /**
      * 单机版配置
      * @Title: JedisConnectionFactory
@@ -117,23 +198,23 @@ public class RedisConfig extends CachingConfigurerSupport {
      * @date 2018年2月24日
      * @throws
      */
-    @Bean
-    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig){
-        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig);
-        //连接池
-        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
-        //IP地址
-        JedisConnectionFactory.setHostName(hostName);
-        //端口号
-        JedisConnectionFactory.setPort(port);
-        //如果Redis设置有密码
-        JedisConnectionFactory.setPassword(password);
-        //客户端超时时间单位是毫秒
-        JedisConnectionFactory.setTimeout(timeout);
-
-        JedisConnectionFactory.setDatabase(dbIndex);
-        return JedisConnectionFactory;
-    }
+//    @Bean
+//    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig){
+//        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig);
+//        //连接池
+//        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
+//        //IP地址
+//        JedisConnectionFactory.setHostName(hostName);
+//        //端口号
+//        JedisConnectionFactory.setPort(port);
+//        //如果Redis设置有密码
+//        JedisConnectionFactory.setPassword(password);
+//        //客户端超时时间单位是毫秒
+//        JedisConnectionFactory.setTimeout(timeout);
+//
+//        JedisConnectionFactory.setDatabase(dbIndex);
+//        return JedisConnectionFactory;
+//    }
 
     /**
      * 实例化 RedisTemplate 对象
@@ -146,6 +227,7 @@ public class RedisConfig extends CachingConfigurerSupport {
         initDomainRedisTemplate(redisTemplate, redisConnectionFactory);
         return redisTemplate;
     }
+
     /**
      * 设置数据存入 redis 的序列化方式,并开启事务
      *
@@ -162,13 +244,15 @@ public class RedisConfig extends CachingConfigurerSupport {
         redisTemplate.setEnableTransactionSupport(true);
         redisTemplate.setConnectionFactory(factory);
     }
+
     /**
      * 注入封装RedisTemplate
-     * @Title: redisUtil
+     *
      * @return RedisUtil
+     * @throws
+     * @Title: redisUtil
      * @autor lpl
      * @date 2017年12月21日
-     * @throws
      */
     @Bean(name = "redisUtil")
     public RedisUtil redisUtil(RedisTemplate<String, Object> redisTemplate) {
@@ -176,5 +260,44 @@ public class RedisConfig extends CachingConfigurerSupport {
         redisUtil.setRedisTemplate(redisTemplate);
         return redisUtil;
     }
+//    @Value("${vehicle.redis.caches.expiration:-1}")
+//    private String expiration;
+//    @Value("${vehicle.redis.defaultExpiration}")
+//    private long defaultExpiration;
+//
+//    @Value("${vehicle.redis.caches.name}")
+//    private String cache_name;
+//
+//    @Bean
+//    public CacheManager cacheManager(RedisTemplate redisTemplate) {
+//
+//        RedisCacheManager cacheManager = new RedisCacheManager(redisTemplate);
+//        List<String> cacheNames=new ArrayList<String>();
+//        Map<String,Long> cacheExpirations=new HashMap<String,Long>(cacheNames.size(),1);
+//        String[] exps=expiration.split(",");
+//        Cache c=new Cache();
+//        Optional.ofNullable(cache_name).ifPresent(cname -> {
+//            c.index=0;
+//            Arrays.asList(cname.split(",")).forEach(name -> {
+//                if(name!=null && !name.equals("")){
+//                    cacheNames.add(name);
+//                    c.index=c.index++;
+//                    if(exps[c.index]!=null &&  !exps[c.index].equals("")){
+//                        cacheExpirations.put(name, Long.valueOf(exps[c.index]));
+//                    }
+//                }
+//            });
+//        });
+//        cacheManager.setCacheNames(cacheNames);
+//
+//        cacheManager.setDefaultExpiration(defaultExpiration);
+//        cacheManager.setExpires(cacheExpirations);
+//        return cacheManager;
+//    }
+//    public class Cache{
+//        public int index;
+//        public String name;
+//        public long expiration;
+//    }
 
 }
