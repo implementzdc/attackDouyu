@@ -11,7 +11,6 @@
 package zdc.cc.domain;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -24,8 +23,6 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
 import zdc.cc.util.RedisUtil;
 
@@ -43,7 +40,6 @@ import java.util.Set;
 @Configuration
 @EnableCaching
 @PropertySource("classpath:redis.properties")
-@ConditionalOnClass({JedisCluster.class})
 public class RedisConfig extends CachingConfigurerSupport {
     @Value("${redis.maxIdle}")
     private Integer maxIdle;
@@ -145,20 +141,20 @@ public class RedisConfig extends CachingConfigurerSupport {
         return redisClusterConfiguration;
     }
 
-    @Bean
-    public JedisCluster getJedisCluster(JedisPoolConfig jedisPoolConfig) {
-        String[] cNodes = clusterNodes.split(",");
-        Set<HostAndPort> nodes = new HashSet<>();
-        //分割出集群节点
-        for (String node : cNodes) {
-            String[] hp = node.split(":");
-            nodes.add(new HostAndPort(hp[0], Integer.parseInt(hp[1])));
-        }
-
-        //创建集群对象//
-//        JedisCluster jedisCluster = new JedisCluster(nodes,timeout);
-        return new JedisCluster(nodes, maxWaitMillis, timeout, mmaxRedirectsac, password, jedisPoolConfig);
-    }
+//    @Bean
+//    public JedisCluster getJedisCluster(JedisPoolConfig jedisPoolConfig) {
+//        String[] cNodes = clusterNodes.split(",");
+//        Set<HostAndPort> nodes = new HashSet<>();
+//        //分割出集群节点
+//        for (String node : cNodes) {
+//            String[] hp = node.split(":");
+//            nodes.add(new HostAndPort(hp[0], Integer.parseInt(hp[1])));
+//        }
+//
+//        //创建集群对象//
+////        JedisCluster jedisCluster = new JedisCluster(nodes,timeout);
+//        return new JedisCluster(nodes, maxWaitMillis, timeout, mmaxRedirectsac, password, jedisPoolConfig);
+//    }
 
 
     /**
@@ -177,9 +173,9 @@ public class RedisConfig extends CachingConfigurerSupport {
         JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
         JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
         //IP地址
-        JedisConnectionFactory.setHostName(hostName);
+//        JedisConnectionFactory.setHostName(hostName);
 //        //端口号
-        JedisConnectionFactory.setPort(port);
+//        JedisConnectionFactory.setPort(port);
         JedisConnectionFactory.setTimeout(timeout);
 //
         JedisConnectionFactory.setDatabase(dbIndex);

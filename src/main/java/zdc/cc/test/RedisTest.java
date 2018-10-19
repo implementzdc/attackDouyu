@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import redis.clients.jedis.JedisCluster;
 import zdc.cc.Application;
 import zdc.cc.domain.User;
 import zdc.cc.util.RedisUtil;
@@ -43,13 +42,14 @@ public class RedisTest {
     @Resource
     RedisUtil redisUtil;
 
-    @Resource
-    private JedisCluster jedisCluster;
+//    @Resource
+//    private JedisCluster jedisCluster;
     @Test
     public void testRedis(){
         User user= new User();
         user.setSex("1");
-        jedisCluster.set("123", "ss");
+        String value = (String)redisUtil.get("123");
+        redisUtil.set("123", "ss");
         List<User> list = new ArrayList<>();
         list.add(user);
         redisUtil.set("test",list);
