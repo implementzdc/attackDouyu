@@ -53,9 +53,9 @@ public class RedisTest {
         List<User> list = new ArrayList<>();
         list.add(user);
         redisUtil.set("test",list);
-        User user1 =(User) redisUtil.get("123");
+//        User user1 =(User) redisUtil.get("test");
         List<User> list1 =( List<User>) redisUtil.get("test");
-        log.info(user1.toString());
+        log.info(list1.toString());
     }
 
     public RedisUtil getRedisUtil() {

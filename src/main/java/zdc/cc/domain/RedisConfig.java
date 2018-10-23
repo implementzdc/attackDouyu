@@ -16,18 +16,13 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
 import zdc.cc.util.RedisUtil;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * 〈一句话功能简述〉<br>
@@ -66,11 +61,11 @@ public class RedisConfig extends CachingConfigurerSupport {
     private boolean testWhileIdle;
 
 
-    @Value("${spring.redis.cluster.nodes}")
-    private String clusterNodes;
-
-    @Value("${spring.redis.cluster.max-redirects}")
-    private Integer mmaxRedirectsac;
+//    @Value("${spring.redis.cluster.nodes}")
+//    private String clusterNodes;
+//
+//    @Value("${spring.redis.cluster.max-redirects}")
+//    private Integer mmaxRedirectsac;
 
     @Value("${redis.hostName}")
     private String hostName;
@@ -122,24 +117,24 @@ public class RedisConfig extends CachingConfigurerSupport {
      * @autor lpl
      * @date 2017年12月22日
      */
-    @Bean
-    public RedisClusterConfiguration redisClusterConfiguration() {
-        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration();
-        //Set<RedisNode> clusterNodes
-        String[] serverArray = clusterNodes.split(",");
-
-        Set<RedisNode> nodes = new HashSet<RedisNode>();
-
-        for (String ipPort : serverArray) {
-            String[] ipAndPort = ipPort.split(":");
-            nodes.add(new RedisNode(ipAndPort[0].trim(), Integer.valueOf(ipAndPort[1])));
-        }
-
-        redisClusterConfiguration.setClusterNodes(nodes);
-        redisClusterConfiguration.setMaxRedirects(mmaxRedirectsac);
-
-        return redisClusterConfiguration;
-    }
+//    @Bean
+//    public RedisClusterConfiguration redisClusterConfiguration() {
+//        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration();
+//        //Set<RedisNode> clusterNodes
+//        String[] serverArray = clusterNodes.split(",");
+//
+//        Set<RedisNode> nodes = new HashSet<RedisNode>();
+//
+//        for (String ipPort : serverArray) {
+//            String[] ipAndPort = ipPort.split(":");
+//            nodes.add(new RedisNode(ipAndPort[0].trim(), Integer.valueOf(ipAndPort[1])));
+//        }
+//
+//        redisClusterConfiguration.setClusterNodes(nodes);
+//        redisClusterConfiguration.setMaxRedirects(mmaxRedirectsac);
+//
+//        return redisClusterConfiguration;
+//    }
 
 //    @Bean
 //    public JedisCluster getJedisCluster(JedisPoolConfig jedisPoolConfig) {
@@ -158,30 +153,30 @@ public class RedisConfig extends CachingConfigurerSupport {
 
 
     /**
-     * 配置工厂
-     *
-     * @param @param  jedisPoolConfig
-     * @param @return
-     * @return JedisConnectionFactory
-     * @throws
-     * @Title: JedisConnectionFactory
-     * @autor lpl
-     * @date 2017年12月22日
-     */
-    @Bean
-    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig, RedisClusterConfiguration redisClusterConfiguration) {
-        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
-        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
-        //IP地址
-//        JedisConnectionFactory.setHostName(hostName);
+//     * 配置工厂
+//     *
+//     * @param @param  jedisPoolConfig
+//     * @param @return
+//     * @return JedisConnectionFactory
+//     * @throws
+//     * @Title: JedisConnectionFactory
+//     * @autor lpl
+//     * @date 2017年12月22日
+//     */
+//    @Bean
+//    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig, RedisClusterConfiguration redisClusterConfiguration) {
+//        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
+//        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
+//        //IP地址
+////        JedisConnectionFactory.setHostName(hostName);
 //        //端口号
-//        JedisConnectionFactory.setPort(port);
-        JedisConnectionFactory.setTimeout(timeout);
-//
-        JedisConnectionFactory.setDatabase(dbIndex);
-        JedisConnectionFactory.setPassword(password);
-        return JedisConnectionFactory;
-    }
+////        JedisConnectionFactory.setPort(port);
+//        JedisConnectionFactory.setTimeout(timeout);
+////
+//        JedisConnectionFactory.setDatabase(dbIndex);
+//        JedisConnectionFactory.setPassword(password);
+//        return JedisConnectionFactory;
+//    }
 
 
     /**
@@ -194,23 +189,23 @@ public class RedisConfig extends CachingConfigurerSupport {
      * @date 2018年2月24日
      * @throws
      */
-//    @Bean
-//    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig){
-//        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig);
-//        //连接池
-//        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
-//        //IP地址
-//        JedisConnectionFactory.setHostName(hostName);
-//        //端口号
-//        JedisConnectionFactory.setPort(port);
-//        //如果Redis设置有密码
-//        JedisConnectionFactory.setPassword(password);
-//        //客户端超时时间单位是毫秒
-//        JedisConnectionFactory.setTimeout(timeout);
-//
-//        JedisConnectionFactory.setDatabase(dbIndex);
-//        return JedisConnectionFactory;
-//    }
+    @Bean
+    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig){
+        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig);
+        //连接池
+        JedisConnectionFactory.setPoolConfig(jedisPoolConfig);
+        //IP地址
+        JedisConnectionFactory.setHostName(hostName);
+        //端口号
+        JedisConnectionFactory.setPort(port);
+        //如果Redis设置有密码
+        JedisConnectionFactory.setPassword(password);
+        //客户端超时时间单位是毫秒
+        JedisConnectionFactory.setTimeout(timeout);
+
+        JedisConnectionFactory.setDatabase(dbIndex);
+        return JedisConnectionFactory;
+    }
 
     /**
      * 实例化 RedisTemplate 对象
